@@ -21,6 +21,7 @@ int pulsePin = 0;                 // Pulse Sensor purple wire connected to analo
 int blinkPin = 13;                // pin to blink led at each beat
 int fadePin = 5;                  // pin to do fancy classy fading blink at each beat
 int fadeRate = 0;                 // used to fade LED on with PWM on fadePin
+int startPin = 2;                 // switch to detect when object is on stand (high = still on stand, low = off stand)
 
 // Volatile Variables, used in the interrupt service routine!
 volatile int BPM;                   // int that holds raw Analog in 0. updated every 2mS
@@ -50,12 +51,20 @@ void setup(){
 
 //  Where the Magic Happens
 void loop(){
+  boolean userStarted;             // false until user starts the experience, through switch (or other method?)
+  
+  serialOutput();
 
-    serialOutput() ;
+  // assuming you are making a switch out of the stand, so switch disconnecting means user is starting
+  if (digitalRead(startPin) == LOW) {  // "inverse logic": when switch is LOW / disconnected, the user has started
+    userStarted = true;
+  } else {
+    userStarted = false;
+  }
 
-  if (QS == true){     // A Heartbeat Was Found
-                       // BPM and IBI have been Determined
-                       // Quantified Self "QS" true when arduino finds a heartbeat
+  if (userStarted == true && QS == true) {    // User has started, AND a Heartbeat Was Found 
+                                // BPM and IBI have been Determined
+                                // Quantified Self "QS" true when arduino finds a heartbeat
         fadeRate = 255;         // Makes the LED Fade Effect Happen
                                 // Set 'fadeRate' Variable to 255 to fade LED with pulse
         serialOutputWhenBeatHappens();   // A Beat Happened, Output that to serial.
@@ -63,7 +72,7 @@ void loop(){
   }
 
   ledFadeToBeat();                      // Makes the LED Fade Effect Happen
-  delay(20);                             //  take a break
+  delay(20);                            // delay slightly to keep serial data stream from overloading recipient
 }
 
 
